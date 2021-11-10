@@ -48,16 +48,19 @@ def pred_bins_model(num_bins, log_dir):
 
     # model data opt fine tune
     data = Data.TensorDataset(torch.from_numpy(X_train_).float(), torch.from_numpy(y_ind_train_))
-    loader = Data.DataLoader(dataset=data,batch_size=1024,shuffle=False,num_workers=4,drop_last=False)
+    loader = Data.DataLoader(dataset=data,batch_size=256,shuffle=False,num_workers=0,drop_last=False)
 
-    cls_model = Res_cls_sampler(num_bins=num_bins).to(device)
-    optimizer = torch.optim.Adam(cls_model.parameters(),lr=7e-5, weight_decay=args.weight_decay)
+
+    cls_model = Res_cls_sampler(num_bins,1).to(device)
+    tmp_epoches = 5
+
+    optimizer = torch.optim.Adam(cls_model.parameters(),lr=cls_model.lr, weight_decay=args.weight_decay)
     loss_fn = torch.nn.CrossEntropyLoss()
 
-    for epoch in range(1):
+    for epoch in range(tmp_epoches):
         cls_model.zero_grad()
         cls_model.train()
-        print(f'Fine tune bins prediction epoch:{epoch+1}/11')
+        print(f'Fine tune bins prediction epoch:{epoch+1}/5')
         for step,(batch_x,batch_y) in tqdm(enumerate(loader)):
             optimizer.zero_grad()
             batch_x=batch_x.to(device)
@@ -66,6 +69,7 @@ def pred_bins_model(num_bins, log_dir):
             loss = loss_fn(batch_pred, batch_y)
             loss.backward()
             optimizer.step()
+            
     print('Finished fune tune\n')
 
     # predict bins
@@ -73,7 +77,6 @@ def pred_bins_model(num_bins, log_dir):
     pred_tensor, (hist_pred,_) = cls_model(torch.from_numpy(X_test).float().to(device))
     pred_ind = pred_tensor.argmax(1).detach().cpu().numpy()
     hist_pred, _ = np.histogram(pred_ind, np.linspace(0, num_bins, num_bins+1, endpoint=True))
-
 
     # samples based on predicted bins 
     np.random.seed(args.seed)
@@ -98,46 +101,46 @@ def transfer_model(method, t, load_tranfer=True):
     if t == 'es' and method == 'Densenet':
         model = Dense_back(36)
         if load_tranfer:
-            model.load_state_dict(torch.load("../Backup_model/es_dense.pt"))
+            model.load_state_dict(torch.load("./Backup_model/es_dense.pt"))
     elif t == 'es' and method == 'Resnet':
         model = Res_back(36)
         if load_tranfer:       
-            model.load_state_dict(torch.load("../Backup_model/es_res.pt"))        
+            model.load_state_dict(torch.load("./Backup_model/es_res.pt"))        
     elif t == 'es' and method == 'Transformer':
         model = ImageTransformer(channels=36)
         if load_tranfer:
-            model.load_state_dict(torch.load("../Backup_model/es_trans.pt")) 
+            model.load_state_dict(torch.load("./Backup_model/es_trans.pt")) 
         
     elif t == 'elec' and method == 'Densenet':
         model = Dense_back(50)
         if load_tranfer:
-            model.load_state_dict(torch.load("../Backup_model/elec_dense.pt"))  
+            model.load_state_dict(torch.load("./Backup_model/elec_dense.pt"))  
     elif t == 'elec' and method == 'Resnet':
         model = Res_back(50)
         if load_tranfer:
-            model.load_state_dict(torch.load("../Backup_model/elec_res.pt"))  
+            model.load_state_dict(torch.load("./Backup_model/elec_res.pt"))  
     elif t == 'elec' and method == 'Transformer':
         model = ImageTransformer(channels=50)
         if load_tranfer:
-            model.load_state_dict(torch.load("../Backup_model/elec_trans.pt"))  
+            model.load_state_dict(torch.load("./Backup_model/elec_trans.pt"))  
         
     elif t == 'es0' and method == 'Densenet':
         model = Dense_back(1,3072)
         if load_tranfer:
-            model.load_state_dict(torch.load("../Backup_model/es0_dense.pt"))  
+            model.load_state_dict(torch.load("./Backup_model/es0_dense.pt"))  
     elif t == 'es0' and method == 'Resnet':
         model = Res_back(1)
         if load_tranfer:
-            model.load_state_dict(torch.load("../Backup_model/es0_res.pt"))
+            model.load_state_dict(torch.load("./Backup_model/es0_res.pt"))
     
     elif t == 'elec0' and method == 'Densenet':
         model = Dense_back(1,3072)
         if load_tranfer:
-            model.load_state_dict(torch.load("../Backup_model/elec0_dense.pt"))  
+            model.load_state_dict(torch.load("./Backup_model/elec0_dense.pt"))  
     elif t == 'elec0' and method == 'Resnet':
         model = Res_back(1)
         if load_tranfer:
-            model.load_state_dict(torch.load("../Backup_model/elec0_res.pt")) 
+            model.load_state_dict(torch.load("./Backup_model/elec0_res.pt")) 
     else:
         raise Exception("No such a model")
     
@@ -235,7 +238,7 @@ def valid_model(method, t, sigma, log_dir):
     if args.valid_method == 'bins_pred':
         try:
             print(f'load pred_bins{num_bins} cache')
-            valid_inds = np.load(f"../Initialization_bins/y_2016_split_by_pred_test_bins{num_bins}_checked.npy",allow_pickle=True)
+            valid_inds = np.load(f"./Pred_bins/y_2016_split_by_pred_test_bins{num_bins}_checked.npy",allow_pickle=True)
         except Exception as e:
             print(e)
             print(f'errors occur when loading cache! now predict bins{num_bins}\n')
@@ -273,7 +276,7 @@ def train_info(net,X_train,X_test,y_train,y_test,log_dir,log_file,epoch_num=2,ba
     loss_fn = torch.nn.MSELoss(reduction='mean')
     train_data = Data.TensorDataset(torch.from_numpy(X_train).float(),\
                                     torch.from_numpy(y_train).float())
-    train_loader = Data.DataLoader(dataset=train_data,batch_size=batch_size,shuffle=True,num_workers=4,drop_last=True)
+    train_loader = Data.DataLoader(dataset=train_data,batch_size=batch_size,shuffle=True,num_workers=0,drop_last=True)
     optimizer = torch.optim.Adam(net.parameters(),lr=lr, weight_decay=weight_decay)
 
     with open(log_dir+'/'+log_file, 'w') as f:
@@ -336,7 +339,7 @@ def train_info_merge(net,trains,tests,y_train,y_test,log_file):
                                     torch.from_numpy(elec0_train).float(),\
                                     torch.from_numpy(y_train).float())
 
-    train_loader = Data.DataLoader(dataset=train_data,batch_size=300,shuffle=True,num_workers=2,drop_last=True)
+    train_loader = Data.DataLoader(dataset=train_data,batch_size=300,shuffle=True,num_workers=0,drop_last=True)
     optimizer = torch.optim.Adam(net.parameters(),lr=5e-3, weight_decay=args.weight_decay)
     max_pearson = -1
     with open(log_file, 'w') as f:
@@ -399,7 +402,7 @@ def train_info_Adamerge(net,trains,tests,y_train,y_test,log_file):
                                     torch.from_numpy(elec0_train).float(),\
                                     torch.from_numpy(y_train).float())
 
-    train_loader = Data.DataLoader(dataset=train_data,batch_size=50,shuffle=True,num_workers=2,drop_last=True)
+    train_loader = Data.DataLoader(dataset=train_data,batch_size=50,shuffle=True,num_workers=0,drop_last=True)
     optimizer = torch.optim.Adam(net.parameters(),lr=5e-3, weight_decay=args.weight_decay)
     max_pearson = -1
     with open(log_file, 'w') as f:
@@ -512,7 +515,7 @@ def train_info_Optmerge(net,trains,tests,y_train,y_test,log_file):
                                     torch.from_numpy(elec0_train).float(),\
                                     torch.from_numpy(y_train).float()) #also for sigma 1 2 3 4
 
-    train_loader = Data.DataLoader(dataset=train_data,batch_size=50,shuffle=True,num_workers=2,drop_last=True)
+    train_loader = Data.DataLoader(dataset=train_data,batch_size=50,shuffle=True,num_workers=0,drop_last=True)
     optimizer = torch.optim.Adam(net.parameters(),lr=5e-3, weight_decay=args.weight_decay)
     max_pearson = -1
     with open(log_file, 'w') as f:
@@ -630,7 +633,7 @@ def valid_info(net,X_train,X_test,y_train,y_test,log_dir,log_file,epoch_num=5,ba
     loss_fn = torch.nn.MSELoss(reduction='mean')
     train_data = Data.TensorDataset(torch.from_numpy(X_train).float(),\
                                     torch.from_numpy(y_train).float())
-    train_loader = Data.DataLoader(dataset=train_data,batch_size=batch_size,shuffle=True,num_workers=4,drop_last=True)
+    train_loader = Data.DataLoader(dataset=train_data,batch_size=batch_size,shuffle=True,num_workers=0,drop_last=True)
     optimizer = torch.optim.Adam(net.parameters(),lr=lr, weight_decay=weight_decay)
 
     for epoch in range(epoch_num):
@@ -690,7 +693,7 @@ def valid_info_classifier(net,X_train,X_test,y_train,y_test,log_dir,log_file,epo
     loss_fn = torch.nn.CrossEntropyLoss(reduction='mean')
     train_data = Data.TensorDataset(torch.from_numpy(X_train).float(),\
                                     torch.from_numpy(y_train).float())
-    train_loader = Data.DataLoader(dataset=train_data,batch_size=batch_size,shuffle=True,num_workers=4,drop_last=True)
+    train_loader = Data.DataLoader(dataset=train_data,batch_size=batch_size,shuffle=True,num_workers=0,drop_last=True)
     optimizer = torch.optim.Adam(net.parameters(),lr=lr, weight_decay=weight_decay)
 
     for epoch in range(epoch_num):

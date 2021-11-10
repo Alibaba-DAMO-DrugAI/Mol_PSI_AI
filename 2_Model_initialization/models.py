@@ -1,4 +1,6 @@
 
+from collections import OrderedDict
+
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -121,9 +123,15 @@ class Res_cls_sampler(nn.Module):
         super(Res_cls_sampler,self).__init__()
         self.cls_res = reg_model_2_cls(Res_back(50), 'Resnet', num_bins)
         self.bins = np.linspace(0, num_bins, num_bins+1, endpoint=True)
+        self.lr = 7e-6
         if load_weights:
-            self.cls_res.load_state_dict(torch.load(f"./Backup_model/elec_res_pred_bins{num_bins}.pt"))
-    
+            try:
+                self.cls_res.load_state_dict(torch.load(f"./Backup_model/elec_res_pred_bins{num_bins}.pt"))
+            except:
+                print(f"No such a model ./Backup_model/elec_res_pred_bins{num_bins}")
+        else:
+            self.lr = 4e-5
+
     def forward(self, X):
         with torch.no_grad():
             pred = self.cls_res.backbone(X)
@@ -131,7 +139,6 @@ class Res_cls_sampler(nn.Module):
         pred = self.cls_res.regression(pred)
         pred_ind_np = pred.argmax(axis=1).detach().cpu().numpy()
         hist_pred = np.histogram(pred_ind_np, self.bins)
-
         return pred, hist_pred
 
 class Dense_back(nn.Module):
