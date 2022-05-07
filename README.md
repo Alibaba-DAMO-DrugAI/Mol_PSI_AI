@@ -245,10 +245,13 @@ Other miscellaneous utils for convenience.
 
 If you find our work helpful in your research or work, please cite us.
 
-Molecular persistent spectral image (Mol-PSI) representation for machine learning models in drug design, under review at *Briefings in Bioinformatics*, 2021.  
+Molecular persistent spectral image (Mol-PSI) representation for machine learning models in drug design, published at *Briefings in Bioinformatics*, 2021 year end.   
+
+"Peiran Jiang, Ying Chi, Xiao-shuang Li, Xiang Liu, Xian-sheng Hua, Kelin Xia. Molecular persistent spectral image (Mol-PSI) representation for machine learning models in drug design. *Briefings in Bioinformatics*, 2021, 1-14. https://doi.org/10.1093/bib/bbab527 "
 
 ## Questions & Problems
 
 If you have any questions or problems, please feel free to open a new issue. We will fix the new issue ASAP. You can also email the maintainers and authors below.
 
-**Peiran Jiang, Ying Chi** (peiran@cmu.edu, xinyi.cy@alibaba-inc.com) 
+**Peiran Jiang, Ying Chi** (peiran@cmu.edu, xinyi.cy@alibaba-inc.com / ying.chi@basenbyte.com) 
+Ying Chi is now the Chief Technology Officer of company Base & Byte, with R&D orientation on AI assisted Biological Medicine Discovery. You can contact Base & Byte for technical supporting. 
